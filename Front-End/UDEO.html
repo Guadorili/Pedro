@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Interactivo</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #4050df; margin: 0; padding: 0; }
+    .container { width: 80%; max-width: 600px; margin: 50px auto; background-color: #fff; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; }
+    .chat-log { height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; background-color: #fafafa; }
+    .chat-entry { margin-bottom: 10px; padding: 5px 10px; border-radius: 5px; }
+    .user-message { background-color: #d0eaff; text-align: right; }
+    .ai-message { background-color: #dfffd0; text-align: left; }
+    .input-area { display: flex; }
+    .input-area input { flex: 1; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-right: none; border-radius: 5px 0 0 5px; }
+    .input-area button { padding: 10px 20px; font-size: 16px; border: 1px solid #ccc; background-color: #4CAF50; color: #fff; border-radius: 0 5px 5px 0; cursor: pointer; }
+    .input-area button:hover { background-color: #45a049; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chat Interactivo</h1>
+    <div class="chat-log" id="chat-log"></div>
+    <div class="input-area">
+      <input type="text" id="chat-input" placeholder="Escribe tu pregunta aquí..." />
+      <button id="send-btn">Enviar</button>
+    </div>
+  </div>
+  <script>
+    const chatLog = document.getElementById('chat-log');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function appendMessage(message, type) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('chat-entry');
+      msgDiv.classList.add(type === 'user' ? 'user-message' : 'ai-message');
+      msgDiv.textContent = (type === 'user' ? 'Tú: ' : 'IA: ') + message;
+      chatLog.appendChild(msgDiv);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function sendQuestion() {
+      const question = chatInput.value.trim();
+      if (!question) return;
+      appendMessage(question, 'user');
+      chatInput.value = '';
+      fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pregunta: question })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.respuesta) {
+          appendMessage(data.respuesta, 'ai');
+        } else if (data.error) {
+          appendMessage('Error: ' + data.error, 'ai');
+        }
+      })
+      .catch(err => appendMessage('Error al conectar con el servidor.', 'ai'));
+    }
+
+    sendBtn.addEventListener('click', sendQuestion);
+    chatInput.addEventListener('keyup', (event) => {
+      if (event.key === 'Enter') sendQuestion();
+    });
+  </script>
+</body>
+</html>

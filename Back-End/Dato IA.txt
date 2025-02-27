@@ -1,0 +1,41 @@
+from flask import Flask, request, jsonify, render_template
+import openai
+import os
+from dotenv import load_dotenv
+
+# ACA CARGAN LOS DATOS Y VARIABLES
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+app = Flask(name)
+
+# ESTO ES PARA IR DIRECTAMENTE AL INDEX
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+# RUTA PARA EL FRONT DE TAVO
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    user_message = data.get("pregunta")
+    if not user_message:
+        return jsonify({"respuesta": "No recibí ningún mensaje válido."})
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un asistente que solo responde preguntas sobre ventas de la empresa."},
+                {"role": "user", "content": user_message}
+            ]
+        )
+        answer = response.choices[0].message["content"]
+        return jsonify({"respuesta": answer})
+
+    except Exception as e:
+        return jsonify({"respuesta": "Ocurrió un error."})
+
+# ACA SOLO SE EJECUTA EN HOST LOCAL
+if name == "main":
+    app.run(debug=True, host="127.0.0.1", port=5000)
